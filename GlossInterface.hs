@@ -42,9 +42,9 @@ playReflex display color frequency network = do
            color
            frequency
            ()
-           (\_    -> runHostFrame $ sample picture)
-           (\ge _ -> handleTrigger ge inputTriggerRef)
-           (\fl _ -> handleTrigger fl tickTriggerRef)
+           (\_    -> runSpiderHost $ runHostFrame (sample picture))
+           (\ge _ -> runSpiderHost $ handleTrigger ge inputTriggerRef)
+           (\fl _ -> runSpiderHost $ handleTrigger fl tickTriggerRef)
 
   where
     handleTrigger e trigger = do
