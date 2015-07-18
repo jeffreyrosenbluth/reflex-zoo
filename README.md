@@ -9,6 +9,6 @@ To do
 -----
 
 - [X] Gloss Interface
-- [X] Static Implmentation
-- [ ] Dynamic Implmentation
+- [X] Static Implementation
+- [ ] Dynamic Implementation
 - [ ] Move to gelisam/frp-zoo, remove Buttons.hs, and issue pull request
