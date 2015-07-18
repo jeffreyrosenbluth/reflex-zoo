@@ -56,26 +56,25 @@ mainReflex _ glossEvent = do
     mode5  <- accumB True (eachE toggle5  not)
     mode10 <- accumB True (eachE toggle10 not)
 
-    count0  <- accumB 0 $ leftmost
-                 [ eachE toggle0 (const 0)
-                 , eachE click0  (+1) ]
+    count0  <- accumB 0 $ leftmost [eachE toggle0 (const 0), eachE click0  (+1)]
     count5  <- accumB 0 $ eachE (gate mode5 click5) (+1)
     count10 <- accumB 0 $ eachE click10 (+1)
 
+    -- Output
+
     let minus1   = constant (-1)
 
-        output0  = pull $ if_then_else  <$> sample mode0  <*> sample count0  <*> sample minus1
-        output5  = pull $ if_then_else  <$> sample mode5  <*> sample count5  <*> sample minus1
-        output10  = pull $ if_then_else <$> sample mode10 <*> sample count10 <*> sample minus1
+        output0  = pull $ if_then_else <$> sample mode0  <*> sample count0  <*> sample minus1
+        output5  = pull $ if_then_else <$> sample mode5  <*> sample count5  <*> sample minus1
+        output10 = pull $ if_then_else <$> sample mode10 <*> sample count10 <*> sample minus1
 
         picture = pull $  renderButtons
                       <$> sample output0  <*> pure Nothing
                       <*> sample output5  <*> pure Nothing
                       <*> sample output10 <*> pure Nothing
-
     return picture
 
-
+-- Gloss event loop
 
 main :: IO ()
 main = playReflex (InWindow "Reflex Example" (320, 240) (800, 200))
