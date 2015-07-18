@@ -3,7 +3,6 @@
 module Main where
 
 import Control.Monad.Fix      (MonadFix)
-import Data.Monoid
 
 import Reflex
 import Graphics.Gloss (Picture, Display(..), white)
@@ -13,10 +12,9 @@ import GlossInterface
 
 -- Utilities
 
-ifB :: Reflex t => Behavior t Bool -> Behavior t a -> Behavior t a -> Behavior t a
-ifB p x y = pull $ do
-  v <- sample p
-  if v then sample x else sample y
+if_then_else :: Bool -> a -> a -> a
+if_then_else True  t _ = t
+if_then_else False _ f = f
 
 replaceWith :: Reflex t => a -> Event t b -> Event t a
 replaceWith = fmap . const
@@ -65,14 +63,15 @@ mainReflex _ glossEvent = do
     count10 <- accumB 0 $ eachE click10 (+1)
 
     let minus1   = constant (-1)
-        output0  = ifB mode0  count0  minus1
-        output5  = ifB mode5  count5  minus1
-        output10 = ifB mode10 count10 minus1
-        picture = pull $ do
-          b0  <- sample output0
-          b5  <- sample output5
-          b10 <- sample output10
-          return $ renderButtons b0 Nothing b5 Nothing b10 Nothing
+
+        output0  = pull $ if_then_else  <$> sample mode0  <*> sample count0  <*> sample minus1
+        output5  = pull $ if_then_else  <$> sample mode5  <*> sample count5  <*> sample minus1
+        output10  = pull $ if_then_else <$> sample mode10 <*> sample count10 <*> sample minus1
+
+        picture = pull $  renderButtons
+                      <$> sample output0  <*> pure Nothing
+                      <*> sample output5  <*> pure Nothing
+                      <*> sample output10 <*> pure Nothing
 
     return picture
 
