@@ -17,14 +17,8 @@ ifB prd b1 b2 = pull $ do
   p <- sample prd
   if p then sample b1 else sample b2
 
-filterEq :: (Eq a, Reflex t) => a -> Event t a -> Event t ()
-filterEq x = (() <$) . ffilter (== x)
-
-accumB :: (Reflex t, MonadHold t m, MonadFix m)
-       => a -> Event t (a -> a) -> m (Behavior t a)
-accumB a ef = do
-  d <- foldDyn ($) a ef
-  return $ current d
+filterEq :: (Eq a, Reflex t) => a -> Int -> Event t a -> Event t Int
+filterEq x n = (n <$) . ffilter (== x)
 
 -- FRP network
 
@@ -37,23 +31,23 @@ mainReflex _ glossEvent = do
 
     -- Input
 
-    let click0  = filterEq (Just Click) $ filter0  <$> glossEvent
-        click5  = filterEq (Just Click) $ filter5  <$> glossEvent
-        click10 = filterEq (Just Click) $ filter10 <$> glossEvent
+    let click0  = filterEq (Just Click) 1 $ filter0  <$> glossEvent
+        click5  = filterEq (Just Click) 1 $ filter5  <$> glossEvent
+        click10 = filterEq (Just Click) 1 $ filter10 <$> glossEvent
 
-        toggle0  = filterEq (Just Toggle) $ filter0  <$> glossEvent
-        toggle5  = filterEq (Just Toggle) $ filter5  <$> glossEvent
-        toggle10 = filterEq (Just Toggle) $ filter10 <$> glossEvent
+        toggle0  = filterEq (Just Toggle) 0 $ filter0  <$> glossEvent
+        toggle5  = filterEq (Just Toggle) 0 $ filter5  <$> glossEvent
+        toggle10 = filterEq (Just Toggle) 0 $ filter10 <$> glossEvent
 
     -- Behaviour
 
-    mode0  <- accumB True (not <$ toggle0)
-    mode5  <- accumB True (not <$ toggle5)
-    mode10 <- accumB True (not <$  toggle10)
+    mode0  <- current <$> toggle True toggle0
+    mode5  <- current <$> toggle True toggle5
+    mode10 <- current <$> toggle True toggle10
 
-    count0  <- accumB 0 $ leftmost [const 0 <$ toggle0, (+1) <$ click0]
-    count5  <- accumB 0 $ (+1) <$ (gate mode5 click5)
-    count10 <- accumB 0 $ (+1) <$ click10
+    count0  <- current <$> foldDyn (\a b -> a * (b+a)) 0 (leftmost [toggle0, click0])
+    count5  <- current <$> count (gate mode5 click5)
+    count10 <- current <$> count click10
 
     -- Part 1: static version
 
