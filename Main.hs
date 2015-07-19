@@ -17,14 +17,8 @@ ifB prd b1 b2 = pull $ do
   p <- sample prd
   if p then sample b1 else sample b2
 
-replaceWith :: Reflex t => a -> Event t b -> Event t a
-replaceWith = fmap . const
-
 filterEq :: (Eq a, Reflex t) => a -> Event t a -> Event t ()
-filterEq x = replaceWith () . ffilter (== x)
-
-eachE :: Reflex t => Event t () -> a -> Event t a
-eachE = flip replaceWith
+filterEq x = (() <$) . ffilter (== x)
 
 accumB :: (Reflex t, MonadHold t m, MonadFix m)
        => a -> Event t (a -> a) -> m (Behavior t a)
@@ -53,13 +47,18 @@ mainReflex _ glossEvent = do
 
     -- Behaviour
 
-    mode0  <- accumB True (eachE toggle0  not)
-    mode5  <- accumB True (eachE toggle5  not)
-    mode10 <- accumB True (eachE toggle10 not)
+    mode0  <- accumB True (not <$ toggle0)
+    mode5  <- accumB True (not <$ toggle5)
+    mode10 <- accumB True (not <$  toggle10)
 
-    count0  <- accumB 0 $ leftmost [eachE toggle0 (const 0), eachE click0  (+1)]
-    count5  <- accumB 0 $ eachE (gate mode5 click5) (+1)
-    count10 <- accumB 0 $ eachE click10 (+1)
+    count0  <- accumB 0 $ leftmost [const 0 <$ toggle0, (+1) <$ click0]
+    count5  <- accumB 0 $ (+1) <$ (gate mode5 click5)
+    count10 <- accumB 0 $ (+1) <$ click10
+
+    -- Part 1: static version
+
+    -- Scenario 0: generate new graphs and switch to the latest one.
+
 
     -- Output
 
