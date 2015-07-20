@@ -1,4 +1,6 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes       #-}
+
 
 module GlossInterface
   ( playReflex
@@ -20,7 +22,7 @@ import           Reflex.Host.Class (newEventWithTriggerRef, runHostFrame, fireEv
 
 type InputEvent = G.Event
 
-type GlossApp t m = (Reflex t, MonadHold t m, MonadFix m)
+type GlossApp t m = (Reflex t, MonadHold t m, MonadFix m, MonadFix (PushM t))
                   => Event t Float
                   -> Event t InputEvent
                   -> m (Behavior t Picture)
