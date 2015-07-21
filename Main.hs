@@ -3,6 +3,7 @@
 
 module Main where
 
+import Control.Monad ((<=<))
 import Control.Monad.Fix      (MonadFix)
 
 import Graphics.Gloss (Picture, Display(..), white)
@@ -22,7 +23,7 @@ filterEq x n = (n <$) . ffilter (== x)
 
 switchB :: (Reflex t, MonadHold t m)
         => Behavior t a -> Event t (Behavior t a) -> m (Behavior t a)
-switchB b eb = hold b eb >>= sample
+switchB b eb = pull . (sample <=< sample) <$> hold b eb
 
 instance Reflex t => Applicative (Behavior t) where
   pure    = pull . pure
@@ -68,7 +69,8 @@ mainReflex _ glossEvent = do
     let newCounterE :: Event t (Behavior t Int)
         newCounterE = pushAlways (\_ -> current <$> count click0) toggle0
 
-    newCount0 <- switchB count0 newCounterE
+    count0'   <- current <$> count click0
+    newCount0 <- switchB count0' newCounterE
 
     -- Output
 
