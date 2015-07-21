@@ -3,9 +3,9 @@
 
 module Main where
 
-import Control.Monad.Fix      (MonadFix)
+import Control.Monad.Fix (MonadFix)
 
-import Graphics.Gloss (Picture, Display(..), white)
+import Graphics.Gloss    (Picture, Display(..), white)
 import GlossInterface
 import Reflex
 import Buttons
@@ -63,17 +63,27 @@ mainReflex _ glossEvent = do
     counter   <- current <$> count click0
     dynCount0 <- switcher counter newCounter
 
+    -- Scenario 5: alternate between two active graphs.
+
+    toggleState <- current <$> toggle True toggle5
+  
+    let clickDyn = switch $ pull $ sample toggleState >>= \s ->
+                   return $ if s then click5 else never
+
+    dynCount5   <- current <$> count clickDyn
+
     -- Output
 
     let minus1     = constant (-1)
         output0    = ifB mode0  count0    minus1
         dynOutput0 = ifB mode0  dynCount0 minus1
         output5    = ifB mode5  count5    minus1
+        dynOutput5 = ifB mode5  dynCount5 minus1
         output10   = ifB mode10 count10   minus1
 
         picture = renderButtons
               <$> output0  <*> (Just <$> dynOutput0)
-              <*> output5  <*> pure Nothing
+              <*> output5  <*> (Just <$> dynOutput5)
               <*> output10 <*> pure Nothing
     return picture
 
