@@ -3,7 +3,6 @@
 
 module Main where
 
-import Control.Monad ((<=<))
 import Control.Monad.Fix      (MonadFix)
 
 import Graphics.Gloss (Picture, Display(..), white)
@@ -21,17 +20,9 @@ ifB prd b1 b2 = pull $ do
 filterEq :: (Eq a, Reflex t) => a -> Int -> Event t a -> Event t Int
 filterEq x n = (n <$) . ffilter (== x)
 
-switchB :: (Reflex t, MonadHold t m)
-        => Behavior t a -> Event t (Behavior t a) -> m (Behavior t a)
-switchB b eb = pull . (sample <=< sample) <$> hold b eb
-
-instance Reflex t => Applicative (Behavior t) where
-  pure    = pull . pure
-  a <*> b = pull $ sample a <*> sample b
-
 -- FRP network
 
-mainReflex :: forall t m. (Reflex t, MonadHold t m, MonadFix m, MonadFix (PushM t))
+mainReflex :: forall t m. (Reflex t, MonadHold t m, MonadFix m)
            => Event t Float
            -> Event t InputEvent
            -> m (Behavior t Picture)
@@ -70,7 +61,7 @@ mainReflex _ glossEvent = do
         newCounterE = pushAlways (\_ -> current <$> count click0) toggle0
 
     count0'   <- current <$> count click0
-    newCount0 <- switchB count0' newCounterE
+    newCount0 <- switcher count0' newCounterE
 
     -- Output
 
@@ -80,10 +71,10 @@ mainReflex _ glossEvent = do
         output5    = ifB mode5  count5    minus1
         output10   = ifB mode10 count10   minus1
 
-        picture = pull $  renderButtons
-                      <$> sample output0  <*> (Just <$> sample dynOutput0)
-                      <*> sample output5  <*> pure Nothing
-                      <*> sample output10 <*> pure Nothing
+        picture = renderButtons
+                      <$> output0  <*> (Just <$> dynOutput0)
+                      <*> output5  <*> pure Nothing
+                      <*> output10 <*> pure Nothing
     return picture
 
 -- Gloss event loop

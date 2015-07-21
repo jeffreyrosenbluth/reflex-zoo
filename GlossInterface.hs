@@ -22,7 +22,7 @@ import           Reflex.Host.Class (newEventWithTriggerRef, runHostFrame, fireEv
 
 type InputEvent = G.Event
 
-type GlossApp t m = (Reflex t, MonadHold t m, MonadFix m, MonadFix (PushM t))
+type GlossApp t m = (Reflex t, MonadHold t m, MonadFix m)
                   => Event t Float
                   -> Event t InputEvent
                   -> m (Behavior t Picture)
@@ -33,7 +33,7 @@ playReflex
   -> Int
   -> (forall t m. GlossApp t m)
   -> IO ()
-playReflex display color frequency network = do
+playReflex display color frequency network = 
   runSpiderHost $ do
     (tickEvent,  tickTriggerRef)  <- newEventWithTriggerRef
     (inputEvent, inputTriggerRef) <- newEventWithTriggerRef
