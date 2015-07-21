@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
@@ -19,6 +19,14 @@ ifB prd b1 b2 = pull $ do
 
 filterEq :: (Eq a, Reflex t) => a -> Int -> Event t a -> Event t Int
 filterEq x n = (n <$) . ffilter (== x)
+
+switchB :: (Reflex t, MonadHold t m)
+        => Behavior t a -> Event t (Behavior t a) -> m (Behavior t a)
+switchB b eb = hold b eb >>= sample
+
+instance Reflex t => Applicative (Behavior t) where
+  pure    = pull . pure
+  a <*> b = pull $ sample a <*> sample b
 
 -- FRP network
 
@@ -45,6 +53,8 @@ mainReflex _ glossEvent = do
     mode5  <- current <$> toggle True toggle5
     mode10 <- current <$> toggle True toggle10
 
+    -- Since toggles are 0s and clicks are 1s the folding function is equivalent
+    -- to: if a == 0 then reset to 0 else add 1 to b (the accumulator).
     count0  <- current <$> foldDyn (\a b -> a * (b+a)) 0 (leftmost [toggle0, click0])
     count5  <- current <$> count (gate mode5 click5)
     count10 <- current <$> count click10
@@ -53,20 +63,20 @@ mainReflex _ glossEvent = do
 
     -- Scenario 0: generate new graphs and switch to the latest one.
 
-    -- Whenever 'toggle0' fires, the push function inside will run causing
-    -- count to construct a new counter.
-    let newCounter = pushAlways (\_ -> current <$> count click0) toggle0
+    -- Whenever 'toggle0' fires, the 'pushAlways' function inside will run,
+    -- causing count to construct a new counter.
+    let newCounterE :: Event t (Behavior t Int)
+        newCounterE = pushAlways (\_ -> current <$> count click0) toggle0
 
-    newCounterB <- hold count0 newCounter
-    newCounter0 <- sample newCounterB
+    newCount0 <- switchB count0 newCounterE
 
     -- Output
 
-    let minus1   = constant (-1)
-        output0  = ifB mode0 count0 minus1
-        dynOutput0 = ifB mode0 newCounter0 minus1
-        output5  = ifB mode5 count5 minus1
-        output10 = ifB mode10 count10 minus1
+    let minus1     = constant (-1)
+        output0    = ifB mode0  count0    minus1
+        dynOutput0 = ifB mode0  newCount0 minus1
+        output5    = ifB mode5  count5    minus1
+        output10   = ifB mode10 count10   minus1
 
         picture = pull $  renderButtons
                       <$> sample output0  <*> (Just <$> sample dynOutput0)
