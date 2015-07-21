@@ -57,24 +57,24 @@ mainReflex _ glossEvent = do
 
     -- Whenever 'toggle0' fires, the 'pushAlways' function inside will run,
     -- causing count to construct a new counter.
-    let newCounterE :: Event t (Behavior t Int)
-        newCounterE = pushAlways (\_ -> current <$> count click0) toggle0
+    let newCounter :: Event t (Behavior t Int)
+        newCounter = pushAlways (const $ current <$> count click0) toggle0
 
-    count0'   <- current <$> count click0
-    newCount0 <- switcher count0' newCounterE
+    counter   <- current <$> count click0
+    dynCount0 <- switcher counter newCounter
 
     -- Output
 
     let minus1     = constant (-1)
         output0    = ifB mode0  count0    minus1
-        dynOutput0 = ifB mode0  newCount0 minus1
+        dynOutput0 = ifB mode0  dynCount0 minus1
         output5    = ifB mode5  count5    minus1
         output10   = ifB mode10 count10   minus1
 
         picture = renderButtons
-                      <$> output0  <*> (Just <$> dynOutput0)
-                      <*> output5  <*> pure Nothing
-                      <*> output10 <*> pure Nothing
+              <$> output0  <*> (Just <$> dynOutput0)
+              <*> output5  <*> pure Nothing
+              <*> output10 <*> pure Nothing
     return picture
 
 -- Gloss event loop
