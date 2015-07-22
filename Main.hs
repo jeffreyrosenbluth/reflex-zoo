@@ -65,12 +65,10 @@ mainReflex _ glossEvent = do
 
     -- Scenario 5: alternate between two active graphs.
 
-    toggleState <- current <$> toggle True toggle5
-  
-    let clickDyn = switch $ pull $ sample toggleState >>= \s ->
+    let clickDyn = switch . pull $ sample mode5 >>= \s ->
                    return $ if s then click5 else never
 
-    dynCount5   <- current <$> count clickDyn
+    dynCount5 <- current <$> count clickDyn
 
     -- Output
 
